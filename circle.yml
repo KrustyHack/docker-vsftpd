@@ -1,0 +1,22 @@
+machine:
+  services:
+    - docker
+  environment:
+    USER: ftpuser
+    PASSWORD: yourpassword
+    DIR: ftp
+
+dependencies:
+  pre:
+    - docker pull debian:jessie
+  post:
+      - docker build -t krustyhack/vsftpd .
+
+test:
+  override:
+    - docker run -d -p 21:21 -e USER=ftpuser -e PASSWORD=yourpassword -e DIR=/ftp -v /tmp:/ftp --name vsftpd krustyhack/vsftpd
+    - docker logs -f vsftpd | tee -a ${CIRCLE_ARTIFACTS}/vsftpd.log:
+          background: true
+    - grep $USER -a ${CIRCLE_ARTIFACTS}/vsftpd.log
+    - grep $PASSWORD -a ${CIRCLE_ARTIFACTS}/vsftpd.log
+    - grep $DIR -a ${CIRCLE_ARTIFACTS}/vsftpd.log
